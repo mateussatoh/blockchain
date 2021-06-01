@@ -5,20 +5,18 @@ import { Blockchain } from "./blockchain.js";
 const app = express();
 
 app.get("/", (req, res) => {
-  res.send({
-    error: "Wrong route",
-    message: "The default mining route is  /mine",
+  res.status(200).json({
+    chain: Blockchain.createBlock(),
   });
 });
-
-app.get("/mine", (req, res) => {
+app.get("/verify-chain", (req, res) => {
   res.status(200).json({
-    chain: Blockchain.createBlock(0, 1),
+    chain: Blockchain.verifyChain(),
   });
 });
-app.get("/last_block", (req, res) => {
+app.get("/fraud", (req, res) => {
   res.status(200).json({
-    chain_size: Blockchain.getLastBlock(),
+    chain: Blockchain.fraudChain(),
   });
 });
 

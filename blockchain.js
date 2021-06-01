@@ -4,29 +4,22 @@ const chain = [];
 
 export const Blockchain = {
   createBlock() {
-    if (this.getLastBlock() === 0) {
-      const block = {
-        index: chain.length + 1,
-        timestamp: new Date(),
-        data: Math.random(),
-        previous_hash: 0,
-      };
-      //saida nonce e hash
-      const minedBlock = this.proofOfWork(block);
-      chain.push(minedBlock);
-      return chain;
-    } else {
-      const block = {
-        index: chain.length + 1,
-        timestamp: new Date(),
-        data: Math.random(),
-        previous_hash: chain[this.getLastBlock() - 1].hash,
-      };
-      const minedBlock = this.proofOfWork(block);
-      chain.push(minedBlock);
-      return chain;
+    const block = {
+      index: chain.length + 1,
+      timestamp: new Date(),
+      data: Math.random(),
+      previous_hash: 0,
+    };
+    if (this.getLastBlock() !== 0) {
+      block.previous_hash = chain[this.getLastBlock() - 1].hash;
     }
+    const proofOfWork = this.proofOfWork(block);
+    block.hash = proofOfWork.hash;
+    block.nonce = proofOfWork.nonce;
+    chain.push(block);
+    return chain;
   },
+
   getLastBlock() {
     return chain.length ? chain.length : 0;
   },
@@ -34,17 +27,18 @@ export const Blockchain = {
   proofOfWork(block) {
     var isGoldenNonce = false;
     var nonce = 0;
-
     while (!isGoldenNonce) {
-      const blockHash = SHA256(JSON.stringify([block, nonce])).toString();
+      const blockHash = this.getHash(
+        block.index,
+        block.timestamp,
+        block.data,
+        block.previous_hash,
+        nonce
+      );
       if (blockHash.substring(0, 3) === "000") {
         console.log("Achei!!!", blockHash);
         isGoldenNonce = true;
         return {
-          index: block.index,
-          timestamp: block.timestamp,
-          data: block.data,
-          previous_hash: block.previous_hash,
           nonce: nonce,
           hash: blockHash,
         };
@@ -53,5 +47,33 @@ export const Blockchain = {
         nonce++;
       }
     }
+  },
+
+  getHash(index, timestamp, data, previous_hash, nonce) {
+    return SHA256(
+      JSON.stringify([index, timestamp, data, previous_hash, nonce])
+    ).toString();
+  },
+
+  verifyChain() {
+    var isValid = true;
+    for (var index in chain) {
+      if (
+        this.getHash(
+          chain[index].index,
+          chain[index].timestamp,
+          chain[index].data,
+          chain[index].previous_hash,
+          chain[index].nonce
+        ) !== chain[index].hash
+      ) {
+        isValid = false;
+      }
+    }
+    return isValid;
+  },
+
+  fraudChain() {
+    chain[1].data = 0.4604;
   },
 };
